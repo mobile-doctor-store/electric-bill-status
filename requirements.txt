@@ -1,0 +1,9 @@
+Flask==3.0.0
+requests==2.31.0
+beautifulsoup4==4.12.2
+pandas==2.1.4
+gunicorn==21.2.0
+Flask-SQLAlchemy==3.0.5
+psycopg2-binary==2.9.9
+trafilatura==1.8.0
+openpyxl==3.1.2

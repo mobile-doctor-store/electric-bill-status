@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Dashboard - TGSPDCL Scraper</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>
+                        <i data-feather="database"></i>
+                        Database Dashboard
+                    </h2>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i data-feather="arrow-left"></i>
+                        Back to Home
+                    </a>
+                </div>
+                
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    <strong>Error:</strong> {{ error }}
+                </div>
+                {% endif %}
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary">{{ total_service_numbers or 0 }}</h3>
+                                <p class="text-muted mb-0">
+                                    <i data-feather="hash"></i>
+                                    Service Numbers
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-success">{{ total_bills or 0 }}</h3>
+                                <p class="text-muted mb-0">
+                                    <i data-feather="file-text"></i>
+                                    Total Bills
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h3 class="text-info">{{ recent_scrapes|length or 0 }}</h3>
+                                <p class="text-muted mb-0">
+                                    <i data-feather="activity"></i>
+                                    Recent Scrapes
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Numbers Table -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="users"></i>
+                            Service Numbers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if service_numbers %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Service Number</th>
+                                        <th>Bill Count</th>
+                                        <th>Last Scraped</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sn in service_numbers %}
+                                    <tr>
+                                        <td><code>{{ sn.service_number }}</code></td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ sn.bill_count or 0 }}</span>
+                                        </td>
+                                        <td>
+                                            {% if sn.last_scraped %}
+                                                <small class="text-muted">{{ sn.last_scraped.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            {% else %}
+                                                <small class="text-muted">Never</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('get_bills_api', service_number=sn.service_number) }}" 
+                                               class="btn btn-sm btn-outline-info" target="_blank">
+                                                <i data-feather="eye"></i>
+                                                View JSON
+                                            </a>
+                                            <a href="{{ url_for('export_data', service_number=sn.service_number) }}" 
+                                               class="btn btn-sm btn-success">
+                                                <i data-feather="download"></i>
+                                                Export
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i data-feather="info"></i>
+                            No service numbers found in the database.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Recent Scraping Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i data-feather="activity"></i>
+                            Recent Scraping Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_scrapes %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Service Number</th>
+                                        <th>Status</th>
+                                        <th>Bills Found</th>
+                                        <th>Duration</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in recent_scrapes %}
+                                    <tr>
+                                        <td><code>{{ log.service_number }}</code></td>
+                                        <td>
+                                            {% if log.status == 'success' %}
+                                                <span class="badge bg-success">{{ log.status }}</span>
+                                            {% elif log.status == 'error' %}
+                                                <span class="badge bg-danger">{{ log.status }}</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ log.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ log.bills_found or 0 }}</td>
+                                        <td>
+                                            {% if log.scraping_duration %}
+                                                {{ "%.1f"|format(log.scraping_duration) }}s
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i data-feather="info"></i>
+                            No recent scraping activity found.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

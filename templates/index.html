@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGSPDCL Bill History Scraper</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h2 class="mb-0">
+                                <i data-feather="file-text"></i>
+                                TGSPDCL Bill History Scraper
+                            </h2>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info">
+                                <i data-feather="database"></i>
+                                Database
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-4">
+                            Get real-time bill payment history for TGSPDCL service numbers from official websites.
+                        </p>
+                        
+                        <form method="POST" action="/scrape">
+                            <div class="mb-3">
+                                <label for="service_numbers" class="form-label">
+                                    <i data-feather="hash"></i>
+                                    Service Numbers
+                                </label>
+                                <textarea 
+                                    class="form-control" 
+                                    id="service_numbers" 
+                                    name="service_numbers" 
+                                    rows="4" 
+                                    placeholder="Enter service numbers (one per line or comma-separated)&#10;Example:&#10;101676070&#10;101598959"
+                                    required>101676070
+101598959</textarea>
+                                <div class="form-text">
+                                    Enter one service number per line or separate multiple numbers with commas.
+                                </div>
+                            </div>
+                            
+
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i data-feather="search"></i>
+                                    Get Bill History
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="text-center text-muted">
+                            <small>
+                                <i data-feather="clock"></i>
+                                Processing may take a few minutes • Data is fetched in real-time from official TGSPDCL websites
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script>
+        feather.replace();
+        
+        // Add loading state to form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<i data-feather="loader"></i> Scraping... Please wait';
+            submitBtn.disabled = true;
+            
+            feather.replace();
+            
+            // Re-enable button after 2 minutes as failsafe
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                feather.replace();
+            }, 120000);
+        });
+    </script>
+</body>
+</html>

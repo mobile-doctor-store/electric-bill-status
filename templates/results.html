@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill History Results - TGSPDCL Scraper</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>
+                        <i data-feather="file-text"></i>
+                        Bill History Results
+                    </h2>
+                    <div>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info me-2">
+                            <i data-feather="database"></i>
+                            Database
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i data-feather="arrow-left"></i>
+                            Back to Search
+                        </a>
+                    </div>
+                </div>
+                
+                {% if error %}
+                <div class="alert alert-danger">
+                    <i data-feather="alert-circle"></i>
+                    <strong>Error:</strong> {{ error }}
+                </div>
+                {% endif %}
+                
+                {% if errors %}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning">
+                        <h5 class="mb-0">
+                            <i data-feather="alert-triangle"></i>
+                            Scraping Errors
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for service_number, error_msg in errors.items() %}
+                        <div class="alert alert-warning mb-2">
+                            <strong>Service Number {{ service_number }}:</strong> {{ error_msg }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if results %}
+                {% for service_number, bills in results.items() %}
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i data-feather="hash"></i>
+                            Service Number: {{ service_number }}
+                        </h5>
+                        <div>
+                            <span class="badge bg-primary me-2">{{ bills|length }} bills found</span>
+                            <a href="{{ url_for('export_data', service_number=service_number) }}" 
+                               class="btn btn-sm btn-success">
+                                <i data-feather="download"></i>
+                                Export Excel
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        {% if bills %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th><i data-feather="calendar"></i> Date</th>
+                                        <th><i data-feather="dollar-sign"></i> Amount</th>
+                                        <th><i data-feather="file"></i> Bill Number</th>
+                                        <th><i data-feather="check-circle"></i> Status</th>
+                                        <th><i data-feather="globe"></i> Source</th>
+                                        <th><i data-feather="info"></i> Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for bill in bills %}
+                                    <tr>
+                                        <td>
+                                            {% if bill.date %}
+                                                {{ bill.date }}
+                                            {% else %}
+                                                <span class="text-muted">Not available</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if bill.amount %}
+                                                <span class="fw-bold">{{ bill.amount }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not available</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if bill.bill_number %}
+                                                <code>{{ bill.bill_number }}</code>
+                                            {% else %}
+                                                <span class="text-muted">Not available</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if bill.status %}
+                                                {% if 'paid' in bill.status.lower() %}
+                                                    <span class="badge bg-success">{{ bill.status }}</span>
+                                                {% elif 'due' in bill.status.lower() %}
+                                                    <span class="badge bg-warning">{{ bill.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ bill.status }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not available</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ bill.source or 'scraped' }}</small>
+                                        </td>
+                                        <td>
+                                            {% if bill.raw_text %}
+                                                <button class="btn btn-sm btn-outline-info" 
+                                                        type="button" 
+                                                        data-bs-toggle="collapse" 
+                                                        data-bs-target="#details-{{ loop.index }}" 
+                                                        aria-expanded="false">
+                                                    <i data-feather="eye"></i>
+                                                </button>
+                                                <div class="collapse mt-2" id="details-{{ loop.index }}">
+                                                    <div class="card card-body">
+                                                        <small>{{ bill.raw_text }}</small>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i data-feather="info"></i>
+                            No bill history found for this service number.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                {% if not results and not error %}
+                <div class="alert alert-info">
+                    <i data-feather="info"></i>
+                    No bill history data was found for the provided service numbers. This could be due to:
+                    <ul class="mt-2 mb-0">
+                        <li>Invalid service numbers</li>
+                        <li>No recent bill history available</li>
+                        <li>Website access issues</li>
+                        <li>Service numbers not found in the system</li>
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i data-feather="info"></i>
+                            Scraping Summary
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-primary">{{ service_numbers|length if service_numbers else 0 }}</h5>
+                                    <small class="text-muted">Service Numbers</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-success">{{ results|length if results else 0 }}</h5>
+                                    <small class="text-muted">Successful Scrapes</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-warning">{{ errors|length if errors else 0 }}</h5>
+                                    <small class="text-muted">Errors</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h5 class="text-info">
+                                        {% set total_bills = 0 %}
+                                        {% if results %}
+                                            {% for service_number, bills in results.items() %}
+                                                {% set total_bills = total_bills + bills|length %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        {{ total_bills }}
+                                    </h5>
+                                    <small class="text-muted">Total Bills Found</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
